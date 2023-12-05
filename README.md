@@ -1,4 +1,4 @@
-# GPPool
+# GFformer
 
 The source code of **Graph Filter transformer**
 
