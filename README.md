@@ -1,6 +1,6 @@
 # GFformer
 
-The source code of **Graph Filter transformer**
+The source code of **Graph Filter Transformer**
 
 
 ## Training
