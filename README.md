@@ -1,6 +1,6 @@
 # GFformer
 
-The source code of **Graph Filter Transformer**
+The source code of **GFformer: A Graph Transformer for Extracting All Frequency Information From Large-scale Graphs**
 
 
 ## Training
