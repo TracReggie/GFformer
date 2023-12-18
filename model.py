@@ -1,58 +1,5 @@
 import torch
-import torch.nn.functional as F
 from torch_geometric.nn import Linear
-
-
-class MH_ATT(torch.nn.Module):
-    def __init__(self, fea_dim, num_feas, num_heads, E_dropout, att_dropout):
-        super(MH_ATT, self).__init__()
-
-        self.fea_dim = fea_dim
-        self.num_feas = num_feas
-        self.num_heads = num_heads
-
-        self.E = MLP(fea_dim * num_feas, fea_dim * num_heads, fea_dim * num_heads, 3, E_dropout, 'prelu')
-        self.s = torch.nn.Parameter(torch.FloatTensor(num_heads, 2 * fea_dim, 1))
-        self.out_layer = Linear(num_heads * fea_dim, fea_dim)
-        self.att_dropout = torch.nn.Dropout(att_dropout)
-
-        self.act = torch.nn.Sigmoid()
-
-    def reset_parameters(self):
-        self.E.reset_parameters()
-        self.out_layer.reset_parameters()
-        torch.nn.init.normal_(self.s, std=0.01)
-
-    def att_scores(self, batch_fea):  # [b, num_fea, fea_dim]
-        cat_vector = batch_fea.reshape(batch_fea.size(0), -1)  # [b, num_fea * fea_dim]
-
-        E = self.E(cat_vector)  # [b, fea_dim * num_heads]
-        E = E.reshape(-1, self.num_heads, self.fea_dim)  # [b, num_heads, fea_dim]
-        E_repeat = E.unsqueeze(2).repeat(1, 1, self.num_feas, 1)  # [b, num_heads, num_fea, fea_dim]
-
-        batch_fea = batch_fea.unsqueeze(1).repeat(1, self.num_heads, 1, 1)  # [b, num_heads, num_fea, fea_dim]
-
-        cat_vector = torch.cat([E_repeat, batch_fea], dim=3)  # [b, num_heads, num_fea, 2 * fea_dim]
-
-        s = self.s.unsqueeze(0).repeat(batch_fea.size(0), 1, 1, 1)  # [b, num_heads, 2 * fea_dim, 1]
-
-        att_scores = self.act(torch.matmul(cat_vector, s))  # [b, num_heads, num_fea, 1]
-        att_scores = F.softmax(att_scores - 0.5, dim=2)  # [b, num_heads, num_fea, 1]
-
-        return att_scores
-
-    def forward(self, batch_fea):
-        att_scores = self.att_scores(batch_fea)  # [b, num_heads, num_fea, 1]
-        att_scores = self.att_dropout(att_scores)
-
-        fea_repeat = batch_fea.unsqueeze(1).repeat(1, self.num_heads, 1, 1)  # [b, num_heads, num_fea, fea_dim]
-
-        output = fea_repeat * att_scores
-        output = torch.sum(output, dim=2)  # [b, num_heads, fea_dim]
-        output = output.reshape(-1, self.fea_dim * self.num_heads)
-        output = self.out_layer(output)
-
-        return output
 
 
 class MLP(torch.nn.Module):
