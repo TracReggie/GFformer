@@ -50,10 +50,10 @@ def test(fea, true_y, loader, model, device):
 
 
 def run_experiments(kl, km, kh, t_layers, num_heads, dropout, att_dropout, lr, weight_decay, batch_size,
-                    epochs, runs, eval_steps, data, num_classes, cuda, log=True):
+                    epochs, runs, eval_steps, data, num_classes, cuda):
 
     masks = [data.train_mask, data.val_mask, data.test_mask]
-    [print(torch.sum(mask)) for mask in masks] if log else None
+    [print(torch.sum(mask)) for mask in masks]
 
     set_seed()
     device = torch.device(f'cuda:{cuda}')
@@ -63,7 +63,7 @@ def run_experiments(kl, km, kh, t_layers, num_heads, dropout, att_dropout, lr, w
 
     logger = Logger(runs)
     for run in range(runs):
-        print('============================================') if log else None
+        print('============================================')
         model.reset_parameters()
 
         optimizer = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=weight_decay)
@@ -74,13 +74,13 @@ def run_experiments(kl, km, kh, t_layers, num_heads, dropout, att_dropout, lr, w
 
         for epoch in range(1, 1 + epochs):
             loss = train(train_loader, fea, data.y, model, optimizer, device)
-            print(f'Run: {run + 1:02d}, Epoch: {epoch:02d}, Loss: {loss:.4f}') if log else None
+            print(f'Run: {run + 1:02d}, Epoch: {epoch:02d}, Loss: {loss:.4f}')
 
             if epoch > 9 and epoch % eval_steps == 0:
                 train_acc = test(fea, data.y, train_loader, model, device)
                 val_acc = test(fea, data.y, val_loader, model, device)
                 test_acc = test(fea, data.y, test_loader, model, device)
-                print(f'Train: {train_acc*100:.2f}, Val: {val_acc*100:.2f}, Test: {test_acc*100:.2f}') if log else None
+                print(f'Train: {train_acc*100:.2f}, Val: {val_acc*100:.2f}, Test: {test_acc*100:.2f}')
                 result = train_acc, val_acc, test_acc
                 logger.add_result(run, result)
 
